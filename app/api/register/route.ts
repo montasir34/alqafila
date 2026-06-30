@@ -90,10 +90,13 @@ export async function POST(req: NextRequest) {
 
     // إرسال إيميل التحقق (بعد الـ transaction عشان ما يعطّل)
     try {
+      console.log("[register] sending verification email to:", email);
+      console.log("[register] RESEND_API_KEY present:", !!process.env.RESEND_API_KEY);
+      console.log("[register] AUTH_URL:", process.env.AUTH_URL);
       await sendVerificationEmail(email, verifyToken);
+      console.log("[register] email sent successfully");
     } catch (emailErr) {
       console.error("[register] failed to send verification email:", emailErr);
-      // الحساب اتسوّى — المستخدم يقدر يطلب إعادة إرسال
     }
 
     return NextResponse.json({ user, appliedForVerification: hasDocs }, { status: 201 });
