@@ -31,8 +31,20 @@ export default async function CampaignDetailPage({ params }: PageProps) {
     ...campaign,
     startedAt: campaign.startedAt.toISOString(),
     endedAt: campaign.endedAt?.toISOString() ?? null,
-    payments: campaign.payments.map((p) => ({ ...p, confirmedAt: p.confirmedAt?.toISOString() ?? null })),
-    disbursements: campaign.disbursements.map((d) => ({ ...d, spentAt: d.spentAt.toISOString() })),
+    payments: campaign.payments.map((p) => ({
+      id: p.id,
+      amount: p.amount,
+      method: p.method,
+      confirmedAt: p.confirmedAt?.toISOString() ?? null,
+      supporter: p.supporter,
+    })),
+    disbursements: campaign.disbursements.map((d) => ({
+      id: d.id,
+      amount: d.amount,
+      recipient: d.recipient,
+      proofUrl: d.proofUrl,
+      spentAt: d.spentAt.toISOString(),
+    })),
   };
 
   return (
