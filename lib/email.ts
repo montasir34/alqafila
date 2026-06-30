@@ -7,7 +7,11 @@ export async function sendVerificationEmail(email: string, token: string) {
   const baseUrl = process.env.AUTH_URL ?? "http://localhost:3000";
   const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
 
-  await resend.emails.send({
+  console.log("[email] sending to:", email);
+  console.log("[email] from:", FROM_EMAIL);
+  console.log("[email] verifyUrl:", verifyUrl);
+
+  const result = await resend.emails.send({
     from: `القافلة <${FROM_EMAIL}>`,
     to: email,
     subject: "تأكيد بريدك الإلكتروني — القافلة",
@@ -30,4 +34,5 @@ export async function sendVerificationEmail(email: string, token: string) {
       </div>
     `,
   });
+  console.log("[email] resend result:", JSON.stringify(result));
 }
