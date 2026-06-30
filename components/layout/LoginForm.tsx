@@ -25,7 +25,11 @@ export function LoginForm() {
         redirect: false,
       });
       if (res?.error) {
-        setError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+        if (res.error.includes("unverified") || res.code === "unverified") {
+          router.push("/check-email?resend=1");
+        } else {
+          setError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+        }
       } else {
         router.push("/");
         router.refresh();

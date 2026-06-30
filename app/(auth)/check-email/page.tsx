@@ -2,11 +2,12 @@ import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 
 interface Props {
-  searchParams: Promise<{ applied?: string }>;
+  searchParams: Promise<{ applied?: string; resend?: string }>;
 }
 
 export default async function CheckEmailPage({ searchParams }: Props) {
-  const { applied } = await searchParams;
+  const { applied, resend } = await searchParams;
+  const fromLogin = resend === "1";
 
   return (
     <div className="w-full max-w-md px-4">
@@ -20,11 +21,12 @@ export default async function CheckEmailPage({ searchParams }: Props) {
 
           <div>
             <h2 className="text-lg font-semibold text-foreground mb-2">
-              راجع بريدك الإلكتروني
+              {fromLogin ? "حسابك غير مفعّل بعد" : "راجع بريدك الإلكتروني"}
             </h2>
             <p className="text-sm text-muted-fg leading-relaxed">
-              أرسلنا لك رابط تفعيل الحساب. انقر عليه لتأكيد بريدك
-              والدخول للمنصة.
+              {fromLogin
+                ? "أرسلنا لك رابط تفعيل الحساب عند التسجيل. انقر عليه لتأكيد بريدك ثم سجّل دخولك."
+                : "أرسلنا لك رابط تفعيل الحساب. انقر عليه لتأكيد بريدك والدخول للمنصة."}
             </p>
             {applied === "1" && (
               <p className="text-xs text-primary mt-3 bg-primary-soft rounded-lg px-3 py-2">

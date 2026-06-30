@@ -26,7 +26,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           include: { accounts: true },
         });
 
-        if (!user || !user.emailVerified) return null;
+        if (!user) return null;
 
         // Credentials users have their password stored in a special account
         const credAccount = user.accounts.find(
@@ -39,6 +39,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           credAccount.access_token
         );
         if (!valid) return null;
+
+        if (!user.emailVerified) {
+          throw new Error("unverified");
+        }
 
         return {
           id: user.id,
