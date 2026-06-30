@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+/* ══════════════════════════════════════════
+   نظام ألوان القافلة — CSS Variables
+   ══════════════════════════════════════════ */
+
+:root {
+  /* الأساسي — أحمر عميق راقٍ */
+  --primary:        #B91C1C;
+  --primary-hover:  #991B1B;
+  --primary-soft:   #FEF2F2;
+  --primary-fg:     #FFFFFF;
+
+  /* الخلفيات — أوف-وايت دافئ */
+  --background:     #FFFBF8;
+  --surface:        #FFFFFF;
+  --surface-alt:    #FAF6F2;
+
+  /* النصوص */
+  --foreground:     #1C1917;
+  --muted-fg:       #57534E;
+  --subtle-fg:      #A8A29E;
+
+  /* حدود */
+  --border:         #EFE9E4;
+  --muted:          #F5F0EB;
+
+  /* حالات دلالية */
+  --success:        #15803D;
+  --success-soft:   #F0FDF4;
+  --urgent:         #DC2626;
+  --urgent-soft:    #FFF1F1;
+  --warning:        #B45309;
+  --warning-soft:   #FFFBEB;
+}
+
+/* وضع داكن — جاهز للمستقبل */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background:   #1C1917;
+    --surface:      #292524;
+    --surface-alt:  #231F1D;
+    --foreground:   #FAFAF9;
+    --muted-fg:     #A8A29E;
+    --subtle-fg:    #78716C;
+    --border:       #3C3330;
+    --muted:        #292524;
+    --primary-soft: #3B1515;
+  }
+}
+
+/* ══════════════════════════════════════════
+   Tailwind v4 @theme — ربط المتغيرات
+   ══════════════════════════════════════════ */
+
+@theme inline {
+  /* الخط */
+  --font-sans: var(--font-ibm-plex-arabic), "IBM Plex Sans Arabic", system-ui, sans-serif;
+
+  /* الألوان الأساسية */
+  --color-background:   var(--background);
+  --color-surface:      var(--surface);
+  --color-surface-alt:  var(--surface-alt);
+  --color-foreground:   var(--foreground);
+  --color-primary:      var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-fg:   var(--primary-fg);
+
+  /* النصوص */
+  --color-muted-fg:     var(--muted-fg);
+  --color-subtle-fg:    var(--subtle-fg);
+  --color-muted:        var(--muted);
+
+  /* الحدود */
+  --color-border:       var(--border);
+
+  /* الحالات */
+  --color-success:      var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-urgent:       var(--urgent);
+  --color-urgent-soft:  var(--urgent-soft);
+  --color-warning:      var(--warning);
+  --color-warning-soft: var(--warning-soft);
+}
+
+/* ══════════════════════════════════════════
+   Base styles
+   ══════════════════════════════════════════ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* scrollbar دافئ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface-alt); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted-fg); }
+
+/* focus ring موحّد */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* تحسين اختيار النص */
+::selection {
+  background-color: var(--primary-soft);
+  color: var(--primary);
+}

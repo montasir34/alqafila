@@ -1,0 +1,392 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ===== Enums =====
+
+enum Role {
+  USER
+  CONTRIBUTOR
+  ADMIN
+}
+
+enum VerifyStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NeedType {
+  MEDICINE
+  FOOD
+  SHELTER
+  TRANSPORT
+  CASH
+  OTHER
+}
+
+enum NeedStatus {
+  OPEN
+  FULFILLED
+  CLOSED
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+enum ItemStatus {
+  ACTIVE
+  RESOLVED
+  CLOSED
+}
+
+enum CampaignStatus {
+  ACTIVE
+  COMPLETED
+  CLOSED
+}
+
+enum ReportTarget {
+  NEED
+  LOST_ITEM
+  LOST_CAR
+  FOUND_ITEM
+  MISSING_PERSON
+  CAMPAIGN
+  USER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  ACTIONED
+  DISMISSED
+}
+
+enum NotifType {
+  PAYMENT_RECEIVED
+  NEED_FULFILLED
+  VERIFY_RESULT
+  NEW_MESSAGE
+  REPORT_UPDATE
+}
+
+// ===== Auth (NextAuth v5 + Prisma adapter) =====
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(USER)
+  state         String    @default("")
+  city          String    @default("")
+  createdAt     DateTime  @default(now())
+
+  accounts         Account[]
+  sessions         Session[]
+  contributor      ContributorProfile?
+  needs            Need[]               @relation("NeedPoster")
+  payments         Payment[]
+  votes            Vote[]
+  badges           UserBadge[]
+  lostItems        LostItem[]
+  lostCars         LostCar[]
+  foundItems       FoundItem[]
+  missingPersons   MissingPerson[]
+  campaigns        LiveCampaign[]
+  sentMessages     ContactMessage[]     @relation("MsgSender")
+  receivedMessages ContactMessage[]     @relation("MsgReceiver")
+  reports          Report[]
+  notifications    Notification[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ===== توثيق المساهم =====
+
+model ContributorProfile {
+  id               String       @id @default(cuid())
+  userId           String       @unique
+  status           VerifyStatus @default(PENDING)
+  idImageUrl       String?
+  idImageDeletedAt DateTime?
+  selfieUrl        String?
+  reviewedAt       DateTime?
+  reviewedBy       String?
+  createdAt        DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ===== الحوجات =====
+
+model Need {
+  id              String     @id @default(cuid())
+  posterId        String
+  type            NeedType
+  title           String
+  description     String
+  targetAmount    Int
+  collectedAmount Int        @default(0)
+  paymentMethods  String[]
+  status          NeedStatus @default(OPEN)
+  isAnonymous     Boolean    @default(false)
+  isUrgent        Boolean    @default(false)
+  state           String
+  city            String
+  createdAt       DateTime   @default(now())
+
+  poster   User      @relation("NeedPoster", fields: [posterId], references: [id])
+  payments Payment[]
+  votes    Vote[]
+}
+
+// ===== الدفع =====
+
+model Payment {
+  id            String        @id @default(cuid())
+  supporterId   String
+  needId        String?
+  campaignId    String?
+  amount        Int
+  method        String
+  proofImageUrl String
+  status        PaymentStatus @default(PENDING)
+  confirmedAt   DateTime?
+  createdAt     DateTime      @default(now())
+
+  supporter User          @relation(fields: [supporterId], references: [id])
+  need      Need?         @relation(fields: [needId], references: [id])
+  campaign  LiveCampaign? @relation(fields: [campaignId], references: [id])
+}
+
+// ===== تصويت الإلحاح (موثّقون فقط) =====
+
+model Vote {
+  id        String   @id @default(cuid())
+  needId    String
+  voterId   String
+  createdAt DateTime @default(now())
+
+  need  Need @relation(fields: [needId], references: [id], onDelete: Cascade)
+  voter User @relation(fields: [voterId], references: [id])
+
+  @@unique([needId, voterId])
+}
+
+// ===== الشارات =====
+
+model Badge {
+  id          String      @id @default(cuid())
+  name        String
+  description String
+  iconUrl     String?
+  season      String
+
+  users UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  awardedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+}
+
+// ===== المفقودات =====
+
+model LostItem {
+  id          String     @id @default(cuid())
+  reporterId  String
+  title       String
+  description String
+  imageUrl    String?
+  lastSeenAt  String?
+  state       String
+  city        String
+  status      ItemStatus @default(ACTIVE)
+  createdAt   DateTime   @default(now())
+
+  reporter User @relation(fields: [reporterId], references: [id])
+}
+
+model LostCar {
+  id            String     @id @default(cuid())
+  reporterId    String
+  make          String
+  model         String
+  year          Int?
+  color         String
+  plateNumber   String
+  chassisNumber String?
+  description   String?
+  imageUrl      String?
+  state         String
+  city          String
+  status        ItemStatus @default(ACTIVE)
+  createdAt     DateTime   @default(now())
+
+  reporter User @relation(fields: [reporterId], references: [id])
+}
+
+// ===== المفقودين (بشر) =====
+
+model MissingPerson {
+  id           String     @id @default(cuid())
+  reporterId   String
+  name         String
+  age          Int?
+  gender       String?
+  description  String
+  photoUrl     String?
+  lastSeenAt   String?
+  lastSeenDate DateTime?
+  contactVia   String     @default("platform")
+  state        String
+  city         String
+  status       ItemStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+
+  reporter User @relation(fields: [reporterId], references: [id])
+}
+
+// ===== المعثور عليه =====
+
+model FoundItem {
+  id            String     @id @default(cuid())
+  finderId      String
+  isCar         Boolean    @default(false)
+  title         String
+  description   String
+  imageUrl      String?
+  plateNumber   String?
+  chassisNumber String?
+  foundAt       String?
+  state         String
+  city          String
+  status        ItemStatus @default(ACTIVE)
+  createdAt     DateTime   @default(now())
+
+  finder User @relation(fields: [finderId], references: [id])
+}
+
+// ===== الحملات اللايف =====
+
+model LiveCampaign {
+  id            String         @id @default(cuid())
+  contributorId String
+  title         String
+  description   String
+  goalAmount    Int
+  raisedAmount  Int            @default(0)
+  status        CampaignStatus @default(ACTIVE)
+  startedAt     DateTime       @default(now())
+  endedAt       DateTime?
+
+  contributor   User                   @relation(fields: [contributorId], references: [id])
+  payments      Payment[]
+  disbursements CampaignDisbursement[]
+}
+
+model CampaignDisbursement {
+  id         String   @id @default(cuid())
+  campaignId String
+  amount     Int
+  recipient  String
+  proofUrl   String?
+  spentAt    DateTime @default(now())
+
+  campaign LiveCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}
+
+// ===== التواصل الداخلي =====
+
+model ContactMessage {
+  id         String       @id @default(cuid())
+  senderId   String
+  receiverId String
+  targetType ReportTarget
+  targetId   String
+  body       String
+  read       Boolean      @default(false)
+  createdAt  DateTime     @default(now())
+
+  sender   User @relation("MsgSender", fields: [senderId], references: [id])
+  receiver User @relation("MsgReceiver", fields: [receiverId], references: [id])
+}
+
+// ===== البلاغات =====
+
+model Report {
+  id         String       @id @default(cuid())
+  reporterId String
+  targetType ReportTarget
+  targetId   String
+  reason     String
+  status     ReportStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+
+  reporter User @relation(fields: [reporterId], references: [id])
+}
+
+// ===== الإشعارات =====
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      NotifType
+  message   String
+  relatedId String?
+  read      Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
