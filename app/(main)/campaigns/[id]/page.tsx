@@ -5,6 +5,22 @@ import { CampaignDetailClient } from "@/components/campaigns/CampaignDetailClien
 
 type PageProps = { params: Promise<{ id: string }> };
 
+type RawPayment = {
+  id: string;
+  amount: number;
+  method: string;
+  confirmedAt: Date | null;
+  supporter: { name: string | null };
+};
+
+type RawDisbursement = {
+  id: string;
+  amount: number;
+  recipient: string;
+  proofUrl: string | null;
+  spentAt: Date;
+};
+
 export default async function CampaignDetailPage({ params }: PageProps) {
   const [{ id }, session] = await Promise.all([params, auth()]);
 
@@ -31,14 +47,14 @@ export default async function CampaignDetailPage({ params }: PageProps) {
     ...campaign,
     startedAt: campaign.startedAt.toISOString(),
     endedAt: campaign.endedAt?.toISOString() ?? null,
-    payments: campaign.payments.map((p) => ({
+    payments: (campaign.payments as RawPayment[]).map((p) => ({
       id: p.id,
       amount: p.amount,
       method: p.method,
       confirmedAt: p.confirmedAt?.toISOString() ?? null,
       supporter: p.supporter,
     })),
-    disbursements: campaign.disbursements.map((d) => ({
+    disbursements: (campaign.disbursements as RawDisbursement[]).map((d) => ({
       id: d.id,
       amount: d.amount,
       recipient: d.recipient,
