@@ -1,18 +1,27 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const FROM_EMAIL = process.env.RESEND_FROM ?? "noreply@resend.dev";
+function createTransporter() {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  });
+}
 
 export async function sendVerificationEmail(email: string, token: string) {
-  const resend = new Resend(process.env.RESEND_API_KEY);
   const baseUrl = process.env.AUTH_URL ?? "http://localhost:3000";
   const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
 
   console.log("[email] sending to:", email);
-  console.log("[email] from:", FROM_EMAIL);
+  console.log("[email] from:", process.env.GMAIL_USER);
   console.log("[email] verifyUrl:", verifyUrl);
 
-  const result = await resend.emails.send({
-    from: `القافلة <${FROM_EMAIL}>`,
+  const transporter = createTransporter();
+
+  const result = await transporter.sendMail({
+    from: `القافلة <${process.env.GMAIL_USER}>`,
     to: email,
     subject: "تأكيد بريدك الإلكتروني — القافلة",
     html: `
@@ -34,5 +43,6 @@ export async function sendVerificationEmail(email: string, token: string) {
       </div>
     `,
   });
-  console.log("[email] resend result:", JSON.stringify(result));
+
+  console.log("[email] result:", result.messageId);
 }
